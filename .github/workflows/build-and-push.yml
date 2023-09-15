@@ -1,0 +1,45 @@
+name: Build and Push Docker Image
+
+on:
+  pull_request:
+    types:
+      - opened
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Google Cloud SDK
+        uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Build Docker Image
+        run: |
+          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ github.repository }}:${{ github.sha }} .
+          echo "${{ secrets.GCP_SA_KEY }}" | docker login -u _json_key --password-stdin https://gcr.io
+          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ github.repository }}:${{ github.sha }}
+
+      - name: Store Docker Image URL
+        id: image_url
+        run: echo "::set-output name=image_url::gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ github.repository }}:${{ github.sha }}"
+
+      - name: Comment PR with Image URL
+        uses: actions/github-script@0.10.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const image_url = '${{ steps.image_url.outputs.image_url }}';
+            const body = `Docker image built and pushed: \`${image_url}\``;
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body,
+            })
