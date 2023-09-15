@@ -28,7 +28,7 @@ jobs:
         run: echo "::set-output name=image_url::gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ github.repository }}:${{ github.sha }}"
 
       - name: Comment PR with Image URL
-        uses: actions/github-script@0.10.0
+        uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
