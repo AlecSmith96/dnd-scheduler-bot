@@ -1,6 +1,6 @@
 module github.com/AlecSmith96/dnd-scheduler-bot
 
-go 1.18
+go 1.21
 
 require (
     github.com/ilyakaznacheev/cleanenv v1.5.0
